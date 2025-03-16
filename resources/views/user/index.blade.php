@@ -61,9 +61,9 @@
                     });
                 }
 
-                var datauser;
+                var dataUser;
                 $(document).ready(function () {
-                    datauser = $('#table_user').DataTable({
+                    dataUser = $('#table_user').DataTable({
                         processing: true,
                         serverSide: true,
                         ajax: {
