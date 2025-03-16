@@ -6,6 +6,7 @@ use App\Models\LevelModel;
 use App\Models\UserModel;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
@@ -27,30 +28,29 @@ class UserController extends Controller
     }
 
     public function list(Request $request)
-{
-    $users = UserModel::with('level');
+    {
+        $users = UserModel::with('level');
 
-    if ($request->level_id) {
-        $users->where('level_id', $request->level_id);
+        if ($request->level_id) {
+            $users->where('level_id', $request->level_id);
+        }
+
+        return DataTables::of($users)
+            ->addIndexColumn()
+            ->addColumn('aksi', function ($user) {
+                return '
+                    <a href="' . url('/user/' . $user->user_id) . '" class="btn btn-info btn-sm">Detail</a>
+                    <a href="' . url('/user/' . $user->user_id . '/edit') . '" class="btn btn-warning btn-sm">Edit</a>
+                    <form class="d-inline-block" method="POST" action="' . url('/user/' . $user->user_id) . '">
+                        ' . csrf_field() . method_field('DELETE') . '
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm(\'Apakah Anda yakin menghapus data ini?\');">
+                            Hapus
+                        </button>
+                    </form>';
+            })
+            ->rawColumns(['aksi'])
+            ->make(true);
     }
-
-    return DataTables::of($users)
-        ->addIndexColumn()
-        ->addColumn('aksi', function ($user) {
-            return '
-                <a href="' . url('/user/' . $user->user_id) . '" class="btn btn-info btn-sm">Detail</a>
-                <a href="' . url('/user/' . $user->user_id . '/edit') . '" class="btn btn-warning btn-sm">Edit</a>
-                <form class="d-inline-block" method="POST" action="' . url('/user/' . $user->user_id) . '">
-                    ' . csrf_field() . method_field('DELETE') . '
-                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm(\'Apakah Anda yakin menghapus data ini?\');">
-                        Hapus
-                    </button>
-                </form>';
-        })
-        ->rawColumns(['aksi'])
-        ->make(true);
-}
-
 
     public function create()
     {
@@ -171,5 +171,43 @@ class UserController extends Controller
         } catch (\Illuminate\Database\QueryException $e) {
             return redirect('/user')->with('error', 'Data user gagal dihapus karena masih terdapat tabel lain yang terkait dengan data ini');
         }
+    }
+
+    public function create_ajax()
+    {
+        $level = LevelModel::select('level_id', 'level_nama')->get();
+        
+        return view('user.create_ajax')
+            ->with('level', $level);
+    }
+
+    public function store_ajax(Request $request) {
+        // cek apakah request berupa ajax
+        if ($request->ajax() || $request->wantsJson()) {
+            $rules = [
+                'level_id' => 'required|integer',
+                'username' => 'required|string|min:3|unique:m_user,username',
+                'nama'     => 'required|string|max:100',
+                'password' => 'required|min:6'
+            ];
+
+            // use Illuminate\Support\Facades\Validator;
+            $validator = Validator::make($request->all(), $rules);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => false, // response status, false: error/gagal, true: berhasil
+                    'message' => 'Validasi Gagal',
+                    'msgField' => $validator->errors(), // pesan error validasi
+                ]);
+            }
+
+            UserModel::create($request->all());
+            return response()->json([
+                'status' => true,
+                'message' => 'Data user berhasil disimpan'
+            ]);
+        }
+        redirect('/');
     }
 }
