@@ -214,6 +214,8 @@ public function list(Request $request)
         redirect('/');
     }
 
+    
+
     public function edit_ajax(string $id)
     {
         $user = UserModel::find($id);
@@ -287,5 +289,11 @@ public function list(Request $request)
             }
         }
         return redirect('/');
+    }
+
+    public function show_ajax(string $id)
+    {
+        $user = UserModel::with('level')->find($id);
+        return view('user.show_ajax', ['user' => $user]);
     }
 }
