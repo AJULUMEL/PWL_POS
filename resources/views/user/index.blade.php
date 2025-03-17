@@ -6,7 +6,7 @@
             <h3 class="card-title">{{ $page->title }}</h3>
             <div class="card-tools">
                 <a class="btn btn-sm btn-primary mt-1" href="{{ url('user/create') }}">Tambah</a>
-                <button onclick="modalAction('{{ url('user/create_ajax') }}')" class="btn btn-sm btn-success mt-1">Tambah Ajax</button>
+                <button onclick="modalAction('{{ url('/user/create_ajax') }}')" class="btn btn-sm btn-success mt-1">Tambah Ajax</button>
             </div>
         </div>
         <div class="card-body">
@@ -21,8 +21,8 @@
                     <div class="form-group row">
                         <label class="col-1 control-label col-form-label">Filter:</label>
                         <div class="col-3">
-                            <select class="form-control" id="level_id" name="level_id" required>
-                                <option value="">- Semua</option>
+                            <select class="form-control" name="level_id" id="level_id" required>
+                                <option value="">- Semua -</option>
                                 @foreach($level as $item)
                                     <option value="{{ $item->level_id }}">{{ $item->level_nama }}</option>
                                 @endforeach
@@ -32,7 +32,6 @@
                     </div>
                 </div>
             </div>
-
             <table class="table table-bordered table-striped table-hover table-sm" id="table_user">
                 <thead>
                     <tr>
@@ -44,50 +43,72 @@
                     </tr>
                 </thead>
             </table>
-
-            <div id="myModal" class="modal fade animate shake" tabindex="-1" role="dialog" data-backdrop="static"
-                data-keyboard="false" data-width="75%" aria-hidden="true"></div>
-
+        </div>
+    </div>
+    <div id="myModal" class="modal fade animate shake" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false" data-width="75%" aria-hidden="true"></div>
 @endsection
 
-        @push('css')
-        @endpush
+@push('css')
+@endpush
 
-        @push('js')
-            <script>
-                function modalAction(url = '') {
-                    $('#myModal').load(url, function () {
-                        $('#myModal').modal('show');
-                    });
-                }
+@push('js')
+    <script>
+        function modalAction(url = '') {
+            $('#myModal').load(url, function () {
+                $('#myModal').modal('show');
+            });
+        }
 
-                var dataUser;
-                $(document).ready(function () {
-                    dataUser = $('#table_user').DataTable({
-                        processing: true,
-                        serverSide: true,
-                        ajax: {
-                            url: "{{ url('user/list') }}",
-                            type: "POST",
-                            data: function (d) {
-                                d._token = "{{ csrf_token() }}"; 
-                                d.level_id = $('#level_id').val(); 
-                            }
-                        },
-                        columns: [
-                            { data: "DT_RowIndex", className: "text-center", orderable: false, searchable: false },
-                            { data: "username", orderable: true, searchable: true },
-                            { data: "nama", orderable: true, searchable: true },
-                            { data: "level.level_nama", orderable: false, searchable: false },
-                            { data: "aksi", orderable: false, searchable: false }
-                        ]
-                    });
-
-                    
-                    $('#level_id').change(function () {
-                        dataUser.ajax.reload(null, false); 
-                    });
-                });
-
-            </script>
-        @endpush
+        var dataUser;
+        $(document).ready(function () {
+            dataUser = $('#table_user').DataTable({
+                serverSide: true,
+                ajax: {
+                    "url": "{{ url('user/list') }}",
+                    "dataType": "json",
+                    "type": "POST",
+                    "data": function (d) {
+                        d.level_id = $('#level_id').val();
+                    }
+                },
+                columns: [
+                    // nomor urut dari laravel datatable addIndexColumn()
+                    {
+                        data: "DT_RowIndex",
+                        className: "text-center",
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: "username",
+                        className: "",
+                        orderable: true, // orderable: true, jika ingin kolom ini bisa diurutkan
+                        searchable: true // searchable: true, jika ingin kolom ini bisa dicari
+                    },
+                    {
+                        data: "nama",
+                        className: "",
+                        orderable: true,
+                        searchable: true
+                    },
+                    {
+                        // mengambil data level hasil dari ORM berelasi
+                        data: "level.level_nama",
+                        className: "",
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: "aksi",
+                        className: "",
+                        orderable: false,
+                        searchable: false
+                    }
+                ]
+            });
+            $('#level_id').change(function() {
+                dataUser.ajax.reload();
+            });
+        });
+    </script>
+@endpush
