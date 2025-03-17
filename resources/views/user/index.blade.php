@@ -85,7 +85,7 @@
 
                     
                     $('#level_id').change(function () {
-                        datauser.ajax.reload(null, false); 
+                        dataUser.ajax.reload(null, false); 
                     });
                 });
 

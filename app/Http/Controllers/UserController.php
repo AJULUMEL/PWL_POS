@@ -271,24 +271,32 @@ public function list(Request $request)
         return view('user.confirm_ajax', ['user' => $user]);
     }
 
-    public function delete_ajax(Request $request, string $id) {
-        // cek apakah request dari ajax
-        if ($request->ajax() || $request->wantsJson()) {
+    public function delete_ajax(Request $request, $id)
+    {
+        if($request->ajax() || $request->wantsJson()){
             $user = UserModel::find($id);
-            if ($user) {
-                $user->delete();
+            if($user){
+                try {
+                    $user->delete();
                 return response()->json([
-                    'status' => true,
-                    'message' => 'Data berhasil dihapus'
+                    'status'=> true,
+                    'message'=> 'Data berhasil dihapus'
                 ]);
-            } else {
+                } catch (\Throwable $th) {
                 return response()->json([
-                    'status' => false,
-                    'message' => 'Data tidak ditemukan'
+                    'status'=> false,
+                    'message'=> 'Data tidak bisa dihapus'
+                ]);
+                }
+                
+            }else{
+                return response()->json([
+                    'status'=> false,
+                    'message'=> 'Data tidak ditemuka'
                 ]);
             }
-        }
-        return redirect('/');
+        } 
+        return redirect('/');   
     }
 
     public function show_ajax(string $id)
