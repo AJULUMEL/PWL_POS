@@ -2,51 +2,51 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\LevelModel;
-use App\Models\BarangModel;
 use App\Models\KategoriModel;
+use App\Models\BarangModel;
+use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use Yajra\DataTables\Facades\DataTables;
-use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
+
 class BarangController extends Controller
 {
     public function index()
     {
-        $activeMenu = 'barang';
         $breadcrumb = (object) [
             'title' => 'Daftar Barang',
             'list' => ['Home', 'Barang']
         ];
-        $kategori = KategoriModel::select('kategori_id', 'kategori_nama')->get();
-        return view('barang.index', [
-        'activeMenu' => $activeMenu,
-        'breadcrumb' => $breadcrumb,
-        'kategori' => $kategori
-        ]);
+
+        $page = (object) [
+            'title' => 'Daftar Barang yang terdaftar di sistem'
+        ];
+
+        $activeMenu = 'barang';
+
+        $kategori = KategoriModel::all();
+
+        return view('barang.index', ['breadcrumb' => $breadcrumb, 'page' => $page, 'activeMenu' => $activeMenu, 'kategori' => $kategori]);
     }
 
     public function list(Request $request)
     {
-        $barang = BarangModel::select('barang_id', 'barang_kode', 'harga_beli', 'harga_jual', 'barang_nama', 'kategori_id')->with('kategori');
+        $barang = BarangModel::select('barang_id', 'barang_kode', 'barang_nama', 'harga_beli', 'harga_jual', 'kategori_id')->with('kategori');
 
-        $kategori_id = $request->input('filter_kategori');
-        if(!empty($kategori_id)){
-        $barang->where('kategori_id', $kategori_id);
+        if ($request->kategori_id) {
+            $barang->where('kategori_id', $request->kategori_id);
         }
-        
 
         return DataTables::of($barang)
             ->addIndexColumn()
             ->addColumn('aksi', function ($barang) {
-                 //$btn = '<a href="' . url('/barang/' . $barang->barang_id) . '" class="btn btn-info btn-sm">Detail</a> ';
-                //  $btn .= '<a href="' . url('/barang/' . $barang->barang_id . '/edit') . '" class="btn btn-warning btn-sm">Edit</a> ';
-                //  $btn .= '<form class="d-inline-block" method="POST" action="' . url('/barang/' . $barang->barang_id) . '">'
-                //      . csrf_field() . method_field('DELETE') .
-                //      '<button type="submit" class="btn btn-danger btn-sm" onclick="return confirm(\'Apakah Anda yakin menghapus data ini?\');">Hapus</button></form>';
+                // $btn = '<a href="' . url('/barang/' . $barang->barang_id) . '" class="btn btn-info btn-sm">Detail</a> ';
+                // $btn .= '<a href="' . url('/barang/' . $barang->barang_id . '/edit') . '" class="btn btn-warning btn-sm">Edit</a> ';
+                // $btn .= '<form class="d-inline-block" method="POST" action="' . url('/barang/' . $barang->barang_id) . '">'
+                //     . csrf_field() . method_field('DELETE') .
+                //     '<button type="submit" class="btn btn-danger btn-sm" onclick="return confirm(\'Apakah Anda yakin menghapus data ini?\');">Hapus</button></form>';
                 $btn = '<button onclick="modalAction(\'' . url('/barang/' . $barang->barang_id . '/show_ajax') . '\')" class="btn btn-info btn-sm">Detail</button> ';
                 $btn .= '<button onclick="modalAction(\'' . url('/barang/' . $barang->barang_id . '/edit_ajax') . '\')" class="btn btn-warning btn-sm">Edit</button> ';
                 $btn .= '<button onclick="modalAction(\'' . url('/barang/' . $barang->barang_id . '/delete_ajax') . '\')" class="btn btn-danger btn-sm">Hapus</button> ';
@@ -156,6 +156,7 @@ class BarangController extends Controller
             return redirect('/barang')->with('error', 'Data barang gagal dihapus karena masih terdapat tabel lain yang terkait dengan data ini');
         }
     }
+
     public function create_ajax()
     {
         $kategori = KategoriModel::select('kategori_id', 'kategori_nama')->get();
@@ -255,7 +256,6 @@ class BarangController extends Controller
     public function delete_ajax(Request $request, $id)
     {
         if ($request->ajax() || $request->wantsJson()) {
-            $check = BarangModel::find($id);
             try {
                 $check = BarangModel::find($id);
                 if ($check) {
@@ -284,18 +284,17 @@ class BarangController extends Controller
     }
     public function import()
     {
-    return view('barang.import');
+        return view('barang.import');
     }
     public function import_ajax(Request $request)
     {
-        if($request->ajax() || $request->wantsJson()){
+        if ($request->ajax() || $request->wantsJson()) {
             $rules = [
-            // validasi file harus xls atau xlsx, max 1MB
-            'file_barang' => ['required', 'mimes:xlsx', 'max:1024']
+                // validasi file harus xls atau xlsx, max 1MB
+                'file_barang' => ['required', 'mimes:xlsx', 'max:1024']
             ];
-
             $validator = Validator::make($request->all(), $rules);
-            if($validator->fails()){
+            if ($validator->fails()) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Validasi Gagal',
@@ -309,9 +308,9 @@ class BarangController extends Controller
             $sheet = $spreadsheet->getActiveSheet(); // ambil sheet yang aktif
             $data = $sheet->toArray(null, false, true, true); // ambil data excel
             $insert = [];
-            if(count($data) > 1){ // jika data lebih dari 1 baris
+            if (count($data) > 1) { // jika data lebih dari 1 baris
                 foreach ($data as $baris => $value) {
-                    if($baris > 1){ // baris ke 1 adalah header, maka lewati
+                    if ($baris > 1) { // baris ke 1 adalah header, maka lewati
                         $insert[] = [
                             'kategori_id' => $value['A'],
                             'barang_kode' => $value['B'],
@@ -322,7 +321,7 @@ class BarangController extends Controller
                         ];
                     }
                 }
-                if(count($insert) > 0){
+                if (count($insert) > 0) {
                     // insert data ke database, jika data sudah ada, maka diabaikan
                     BarangModel::insertOrIgnore($insert);
                 }
@@ -330,7 +329,7 @@ class BarangController extends Controller
                     'status' => true,
                     'message' => 'Data berhasil diimport'
                 ]);
-            }else{
+            } else {
                 return response()->json([
                     'status' => false,
                     'message' => 'Tidak ada data yang diimport'
@@ -340,16 +339,15 @@ class BarangController extends Controller
         return redirect('/');
     }
 
-    public function export_excel() {
-        //ambil data barang yang akan di eksport
+    public function export_excel()
+    {
         $barang = BarangModel::select('kategori_id', 'barang_kode', 'barang_nama', 'harga_beli', 'harga_jual')
-        ->orderBy('kategori_id')
+        ->orderBy('kategori_id', 'asc')
         ->with('kategori')
         ->get();
 
-        // load library excel
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();       // ambil sheet yang aktif
+        $sheet = $spreadsheet->getActiveSheet();
 
         $sheet->setCellValue('A1', 'No');
         $sheet->setCellValue('B1', 'Kode Barang');
@@ -358,22 +356,24 @@ class BarangController extends Controller
         $sheet->setCellValue('E1', 'Harga Jual');
         $sheet->setCellValue('F1', 'Kategori');
 
-        $sheet->getStyle('A1:F1')->getFont()->setBold(true);     // bold header
+        $sheet->getStyle('A1:F1')->getFont()->setBold(true);
 
-        $no = 1;        // nomor data dimulai dari 1
-        $baris = 2;     // baris data dimulai dari baris ke 2
+        $no = 1;
+        $baris = 2;
+
         foreach ($barang as $key => $value) {
             $sheet->setCellValue('A' . $baris, $no);
             $sheet->setCellValue('B' . $baris, $value->barang_kode);
             $sheet->setCellValue('C' . $baris, $value->barang_nama);
             $sheet->setCellValue('D' . $baris, $value->harga_beli);
             $sheet->setCellValue('E' . $baris, $value->harga_jual);
-            $sheet->setCellValue('F' . $baris, $value->kategori->kategori_nama); // ambil nama kategori
+            $sheet->setCellValue('F' . $baris, $value->kategori->kategori_nama);
+
             $baris++;
             $no++;
         }
 
-        foreach (range('A','F') as $columnID) {
+        foreach (range('A', 'F') as $columnID) {
             $sheet->getColumnDimension($columnID)->setAutoSize(true);
         }
 
@@ -386,6 +386,7 @@ class BarangController extends Controller
         header('Content-Disposition: attachment;filename="' . $filename . '"');
         header('Cache-Control: max-age=0');
         header('Cache-Control: max-age=1');
+
         header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
         header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
         header('Cache-Control: cache, must-revalidate');
@@ -395,18 +396,18 @@ class BarangController extends Controller
         exit;
     }
 
-    public function export_pdf()
-    {
-        $barang = BarangModel::select('kategori_id','barang_kode','barang_nama','harga_beli','harga_jual')
-            ->orderBy('kategori_id')
-            ->with('kategori')
-            ->get();
+    public function export_pdf(){
+        $barang = BarangModel::select('kategori_id', 'barang_kode', 'barang_nama', 'harga_beli', 'harga_jual')
+        ->orderBy('kategori_id', 'asc')
+        ->orderBy('barang_kode', 'asc')
+        ->with('kategori')
+        ->get();
 
         $pdf = Pdf::loadView('barang.export_pdf', ['barang' => $barang]);
         $pdf->setPaper('a4', 'portrait');
-        $pdf->setOption("isRemoteEnbled", true);
+        $pdf->setOptions(['isRemoteEnabled', true]);
         $pdf->render();
 
-        return $pdf->stream('Data Barang'.date('Y-m-d H:i:s').'.pdf');
+        return $pdf->stream('Data Barang ' . date('Y-m-d H:i:s') . '.pdf');
     }
 }
