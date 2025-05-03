@@ -1,4 +1,12 @@
 <div class="sidebar">
+    <!-- profile -->
+    <a href="/profile" class="brand-link d-flex align-items-center">
+        <img src="{{ auth()->check() ? auth()->user()->getProfilePictureUrl() : asset('avatar.png') }}" alt="User Avatar" style="width: 35px; height: 35px; border-radius: 50%;">
+        <span class="brand-text font-weight-light ml-2">
+            {{ Auth::user()->username }} Profile
+        </span>
+    </a>
+    
     <!-- Sidebar Search Form -->
     <div class="form-inline mt-2">
         <div class="input-group" data-widget="sidebar-search">

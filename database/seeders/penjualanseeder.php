@@ -17,51 +17,61 @@ class PenjualanSeeder extends Seeder
         $data = [
             [
                 'user_id' => 1,
+                'pembeli' => 'Sudirman',
                 'penjualan_kode' => 'FJ-20220101-001',
                 'penjualan_tanggal' => '2022-01-01 09:00:00',
             ],
             [
                 'user_id' => 2,
+                'pembeli' => 'John',
                 'penjualan_kode' => 'FJ-20220102-002',
                 'penjualan_tanggal' => '2022-01-02 10:00:00',
             ],
             [
                 'user_id' => 3,
+                'pembeli' => 'John',
                 'penjualan_kode' => 'FJ-20220103-003',
                 'penjualan_tanggal' => '2022-01-03 11:00:00',
             ],
             [
                 'user_id' => 1,
+                'pembeli' => 'Jane',
                 'penjualan_kode' => 'FJ-20220104-004',
                 'penjualan_tanggal' => '2022-01-04 12:00:00',
             ],
             [
                 'user_id' => 2,
+                'pembeli' => 'Jane',
                 'penjualan_kode' => 'FJ-20220104-005',
                 'penjualan_tanggal' => '2022-01-04 13:00:00'
             ],
             [
                 'user_id' => 3,
+                'pembeli' => 'Jane',
                 'penjualan_kode' => 'FJ-20220105-006',
                 'penjualan_tanggal' => '2022-01-05 14:00:00',
             ],
             [
                 'user_id' => 1,
+                'pembeli' => 'Jane',
                 'penjualan_kode' => 'FJ-20220106-007',
                 'penjualan_tanggal' => '2022-01-06 15:00:00',
             ],
             [
                 'user_id' => 2,
+                'pembeli' => 'Sudirman',
                 'penjualan_kode' => 'FJ-20220107-008',
                 'penjualan_tanggal' => '2022-01-07 16:00:00',
             ],
             [
                 'user_id' => 3,
+                'pembeli' => 'Sudirman',
                 'penjualan_kode' => 'FJ-20220108-009',
                 'penjualan_tanggal' => '2022-01-08 17:00:00',
             ],
             [
                 'user_id' => 1,
+                'pembeli' => 'Sudirman',
                 'penjualan_kode' => 'FJ-20220109-010',
                 'penjualan_tanggal' => '2022-01-09 18:00:00',
             ],

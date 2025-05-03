@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Validator;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use Illuminate\Support\Facades\File;
 
 
 class UserController extends Controller
@@ -35,7 +36,7 @@ class UserController extends Controller
     public function list(Request $request)
     {
         $users = UserModel::select('user_id', 'username', 'nama', 'level_id')->with('level');
-
+        
         if ($request->level_id) {
             $users->where('level_id', $request->level_id);
         }
@@ -353,9 +354,9 @@ class UserController extends Controller
     public function export_excel()
     {
         $user = UserModel::select('user_id', 'level_id', 'username', 'nama', 'password')
-        ->with('level')
-        ->orderBy('level_id', 'asc')
-        ->get();
+            ->with('level')
+            ->orderBy('level_id', 'asc')
+            ->get();
 
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -407,17 +408,25 @@ class UserController extends Controller
         exit;
     }
 
-    public function export_pdf(){
-        $user = UserModel::select('user_id', 'level_id', 'username', 'nama', 'password')
-        ->with('level')
-        ->orderBy('level_id', 'asc')
-        ->get();
-
-        $pdf = Pdf::loadView('user.export_pdf', ['user' => $user]);
+    public function export_pdf(Request $request)
+    {
+        $users = UserModel::select('user_id', 'username', 'nama', 'level_id')->with('level');
+        $users = $users->paginate(10);
+        $pdf = Pdf::loadView('user.export_pdf', compact('users'));
         $pdf->setPaper('a4', 'portrait');
-        $pdf->setOptions(['isRemoteEnabled', true]);
-        $pdf->render();
-
         return $pdf->stream('Data User ' . date('Y-m-d H:i:s') . '.pdf');
     }
+
+    // public function export_pdf()
+    // {
+    //     $user = \DB::table('m_user')
+    //         ->join('m_level', 'm_user.level_id', '=', 'm_level.level_id')
+    //         ->select('m_user.*', 'm_level.level_nama as level_nama')
+    //         ->get();
+
+    //     return view('user.export_pdf', compact('user'));
+    //     // $pdf = Pdf::loadView('user.export_pdf', ['user' => $user]);
+    //     // $pdf->setPaper('a4', 'portrait');
+    //     // return $pdf->stream('Data User ' . date('Y-m-d H:i:s') . '.pdf');
+    // }
 }
