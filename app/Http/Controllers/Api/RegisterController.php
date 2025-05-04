@@ -12,10 +12,10 @@ class RegisterController extends Controller
     public function __invoke(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'username' => 'required',
+            'username' => 'required|unique:m_user,username',
             'nama' => 'required',
             'password' => 'required|min:5|confirmed',
-            'level_id' => 'required',
+            'level_id' => 'required|exists:m_level,level_id',
         ]);
 
         if ($validator->fails()) {
@@ -34,9 +34,10 @@ class RegisterController extends Controller
                 'success' => true,
                 'user' => $user,
             ], 201);
-
+        } else {
             return response()->json([
                 'success' => false,
+                'message' => 'Gagal menambahkan user baru',
             ], 409);
         }
     }
